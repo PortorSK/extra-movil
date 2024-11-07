@@ -1,5 +1,10 @@
+// lib/screens/product_screen.dart
+
+import 'package:examen/infrastructure/connection/api_service.dart';
+import 'package:examen/modules/login/domain/dto/product_dto.dart';
+import 'package:examen/modules/login/domain/repository/product_repository.dart';
+import 'package:examen/modules/login/useCase/fetch_products_by_category_usecase.dart';
 import 'package:flutter/material.dart';
-import '../infrastructure/connection/api_service.dart';
 
 class ProductScreen extends StatefulWidget {
   final String category;
@@ -11,12 +16,19 @@ class ProductScreen extends StatefulWidget {
 }
 
 class _ProductScreenState extends State<ProductScreen> {
-  late Future<List<dynamic>> products;
+  late FetchProductsByCategoryUseCase fetchProductsByCategoryUseCase;
+  late Future<List<ProductDTO>> products;
 
   @override
   void initState() {
     super.initState();
-    products = ApiService().fetchProductsByCategory(widget.category);
+
+    final apiService = ApiService();
+    final productRepository = ProductRepositoryImpl(apiService: apiService);
+    fetchProductsByCategoryUseCase = FetchProductsByCategoryUseCase(repository: productRepository);
+
+    // Cargar los productos al iniciar la pantalla
+    products = fetchProductsByCategoryUseCase.execute(widget.category);
   }
 
   @override
@@ -25,7 +37,7 @@ class _ProductScreenState extends State<ProductScreen> {
       appBar: AppBar(
         title: Text('Productos de ${widget.category}'),
       ),
-      body: FutureBuilder<List<dynamic>>(
+      body: FutureBuilder<List<ProductDTO>>(
         future: products,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -47,7 +59,7 @@ class _ProductScreenState extends State<ProductScreen> {
                   child: Column(
                     children: [
                       Image.network(
-                        product['thumbnail'], // Imagen del producto
+                        product.thumbnail,
                         height: 80,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -55,7 +67,7 @@ class _ProductScreenState extends State<ProductScreen> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          product['title'],
+                          product.title,
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),

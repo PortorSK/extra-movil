@@ -1,62 +1,69 @@
+// lib/screens/categories_screen.dart
+
+import 'package:examen/infrastructure/connection/api_service.dart';
+import 'package:examen/modules/login/domain/dto/category_dto.dart';
+import 'package:examen/modules/login/domain/repository/category_repository.dart';
+import 'package:examen/modules/login/useCase/fetch_categories_usecase.dart';
 import 'package:flutter/material.dart';
-import '../infrastructure/connection/api_service.dart';
-import './products_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
-  const CategoriesScreen({super.key});
-
   @override
   _CategoriesScreenState createState() => _CategoriesScreenState();
 }
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
-  late Future<List<String>> categories;
+  late FetchCategoriesUseCase fetchCategoriesUseCase;
+  List<CategoryDTO> categories = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    categories = ApiService().fetchCategories();
+    
+    final apiService = ApiService();
+    final categoryRepository = CategoryRepository(apiService: apiService);
+    fetchCategoriesUseCase = FetchCategoriesUseCase(repository: categoryRepository);
+
+
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      final fetchedCategories = await fetchCategoriesUseCase.execute();
+      setState(() {
+        categories = fetchedCategories;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print("Error loading categories: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categorías'),
+        title: Text("Categories"),
       ),
-      body: FutureBuilder<List<String>>(
-        future: categories,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No hay categorías'));
-            
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: categories.length,
               itemBuilder: (context, index) {
-                final category = snapshot.data![index];
+                final category = categories[index];
                 return ListTile(
-                  title: Text(category),
-                  trailing: const Icon(Icons.arrow_forward),
+                  title: Text(category.name),
+                  subtitle: Text(category.slug),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ProductScreen(category: category),
-                      ),
-                    );
+                    // Aquí puedes agregar la navegación a la pantalla de productos por categoría
                   },
                 );
               },
-            );
-          }
-        },
-      ),
+            ),
     );
   }
 }
-
