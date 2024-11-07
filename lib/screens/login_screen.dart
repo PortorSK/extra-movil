@@ -20,7 +20,7 @@ class LoginScreen extends StatelessWidget {
           children: [
             // Imagen del login
             Image.asset(
-              'assets/login_image.png', // Asegúrate de añadir la imagen en assets y declarar en pubspec.yaml
+              'assets/nose.jpeg', // Asegúrate de añadir la imagen en assets y declarar en pubspec.yaml
               width: 200,
               height: 200,
             ),

@@ -1,59 +1,77 @@
 import 'package:flutter/material.dart';
+import '../infrastructure/connection/api_service.dart';
 
-class ProductsScreen extends StatelessWidget {
-  final String categoryName;
+class ProductScreen extends StatefulWidget {
+  final String category;
 
-  ProductsScreen({required this.categoryName});
+  const ProductScreen({super.key, required this.category});
 
-  final List<Map<String, String>> products = List.generate(
-    10,
-    (index) => {
-      'name': 'Product ${index + 1} ${index + 1}',
-      'image': 'https://via.placeholder.com/150', // Imagen de ejemplo
-      'details': 'Detalles'
-    },
-  );
+  @override
+  _ProductScreenState createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends State<ProductScreen> {
+  late Future<List<dynamic>> products;
+
+  @override
+  void initState() {
+    super.initState();
+    products = ApiService().fetchProductsByCategory(widget.category);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(categoryName),
+        title: Text('Productos de ${widget.category}'),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(10),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-        ),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          return Card(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Image.network(
-                    product['image']!,
-                    fit: BoxFit.cover,
+      body: FutureBuilder<List<dynamic>>(
+        future: products,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No hay productos'));
+          } else {
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: snapshot.data!.length,
+              itemBuilder: (context, index) {
+                final product = snapshot.data![index];
+                return Card(
+                  child: Column(
+                    children: [
+                      Image.network(
+                        product['thumbnail'], // Imagen del producto
+                        height: 80,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          product['title'],
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          // Navegar a detalles si tienes esa pantalla
+                        },
+                        child: const Text('Detalles'),
+                      ),
+                    ],
                   ),
-                ),
-                Text(product['name']!),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Selected: ${product['name']}")),
-                    );
-                  },
-                  child: Text(
-                    product['details']!,
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-          );
+                );
+              },
+            );
+          }
         },
       ),
     );
