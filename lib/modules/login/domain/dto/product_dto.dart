@@ -1,5 +1,5 @@
 class ProductDTO {
-  final String id;
+  final int id;
   final String title;
   final String thumbnail;
 
@@ -7,7 +7,7 @@ class ProductDTO {
 
   factory ProductDTO.fromJson(Map<String, dynamic> json) {
     return ProductDTO(
-      id: json['id'].toString(),
+      id: json['id'],
       title: json['title'],
       thumbnail: json['thumbnail'],
     );
