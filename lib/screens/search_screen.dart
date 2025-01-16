@@ -2,7 +2,7 @@ import 'package:examen/infrastructure/connection/api_service.dart';
 import 'package:examen/modules/login/domain/dto/product_dto.dart';
 import 'package:examen/modules/login/domain/repository/product_repository.dart';
 import 'package:examen/screens/product_detail_screen.dart';
-import 'package:flutter/material.dart'; // Asegúrate de importar la pantalla de detalles
+import 'package:flutter/material.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -20,10 +20,22 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     productRepository = ProductRepositoryImpl(apiService: ApiService());
+
+    // Agregar un listener para realizar la búsqueda mientras se escribe
+    _searchController.addListener(() {
+      _searchProducts(_searchController.text);
+    });
   }
 
   void _searchProducts(String query) async {
     try {
+      if (query.isEmpty) {
+        setState(() {
+          _products = [];
+        });
+        return;
+      }
+
       print('Buscando productos con el término: $query');
       final products = await productRepository.searchProducts(query);
       setState(() {
@@ -32,6 +44,12 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (error) {
       print('Error fetching products: $error');
     }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose(); // Asegurarse de liberar el controlador
+    super.dispose();
   }
 
   @override
@@ -51,7 +69,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.search),
               ),
-              onSubmitted: _searchProducts,
             ),
           ),
           Expanded(
@@ -64,12 +81,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       return ListTile(
                         title: Text(product.title),
                         onTap: () {
-                          // Navegar a la pantalla de detalles del producto
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ProductDetailScreen(
-                                productId: product.id,  // Usamos product.id directamente como String
+                                productId: product.id, // Mantén esta lógica
                               ),
                             ),
                           );

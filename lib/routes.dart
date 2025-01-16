@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'screens/HomeScreen.dart';
+import 'screens/bottom_navbar.dart';
 
 class Routes {
   static const String login = '/login';
@@ -15,11 +15,7 @@ static Route<dynamic> generateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (_) => const HomeScreen());
     // Otros casos
     default:
-      return MaterialPageRoute(
-        builder: (_) => const Scaffold(
-          body: Center(child: Text('Ruta no definida')),
-        ),
-      );
+      return MaterialPageRoute(builder: (_) => LoginScreen());
   }
 }
 

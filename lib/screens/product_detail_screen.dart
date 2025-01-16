@@ -42,26 +42,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     cartItems = jsonDecode(cartData);
   }
 
-  Future<void> _addToViewedProducts(ProductDetailDTO product) async {
-    final prefs = await SharedPreferences.getInstance();
-    final viewedData = prefs.getString('viewed_products') ?? '[]';
-    final List<dynamic> viewedProducts = jsonDecode(viewedData);
-
-    final existingProductIndex = viewedProducts.indexWhere((item) => item['productId'] == product.id);
-    if (existingProductIndex != -1) {
-      viewedProducts[existingProductIndex]['viewCount'] += 1;
-    } else {
-      viewedProducts.add({
-        'productId': product.id,
-        'name': product.title,
-        'price': product.price,
-        'viewCount': 1,
-      });
-    }
-
-    await prefs.setString('viewed_products', jsonEncode(viewedProducts));
-  }
-
+  
   bool _shouldHideAddToCartButton(ProductDetailDTO product) {
     final cartItem = cartItems.firstWhere(
       (item) => item['productId'] == product.id,
@@ -144,7 +125,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 MaterialPageRoute(
                   builder: (context) => CartScreen(
                     getCartItemsUseCase: GetCartItemsUseCase(cartRepository),
-                    removeFromCartUseCase: RemoveFromCartUseCase(cartRepository),
                     cartRepository: cartRepository,
                   ),
                 ),
@@ -164,7 +144,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             return const Center(child: Text('Detalles del producto no encontrados'));
           } else {
             final product = snapshot.data!;
-            _addToViewedProducts(product);  // Agregar el producto a productos vistos
+            
             final shouldHideButton = _shouldHideAddToCartButton(product);
 
             return SingleChildScrollView(
@@ -195,6 +175,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Text(
                       '\$${product.price}',
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
+                  ),
+                  // Muestra el stock disponible
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Stock disponible: ${product.stock}',
+                      style: const TextStyle(fontSize: 16, color: Colors.blue),
                     ),
                   ),
                   if (shouldHideButton)
@@ -228,45 +216,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ],
                   // Reseñas
                   Padding(
-  padding: const EdgeInsets.all(16.0),
-  child: Text(
-    'Reseñas:',
-    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-  ),
-),
-// Si no hay reseñas
-if (product.reviews.isEmpty)
-  const Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16.0),
-    child: Text('No hay reseñas para este producto.'),
-  )
-// Mostrar las reseñas
-else
-  ...product.reviews.map((review) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '${review['comment']}',
-            style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '- ${review['reviewerName']} (${review['rating']} estrellas)',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Fecha: ${review['date']}',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }).toList(),
-
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Reseñas:',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  if (product.reviews.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text('No hay reseñas para este producto.'),
+                    )
+                  else
+                    ...product.reviews.map((review) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${review['comment']}',
+                              style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '- ${review['reviewerName']} (${review['rating']} estrellas)',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Fecha: ${review['date']}',
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                 ],
               ),
             );

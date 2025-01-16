@@ -4,8 +4,6 @@ import 'package:examen/modules/login/useCase/remove_from_cart_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:examen/screens/cart_screen.dart';
 import 'package:examen/screens/search_screen.dart';
-import 'package:examen/screens/user_profile_screen.dart';
-import 'package:examen/screens/viewed_products_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,11 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
       SearchScreen(),
       CartScreen(
         getCartItemsUseCase: getCartItemsUseCase,
-        removeFromCartUseCase: removeFromCartUseCase,
         cartRepository: cartRepository,  // Pasar el repositorio al CartScreen
       ),
-      ViewedProductsScreen(),
-      UserProfileScreen(),
     ];
   }
 
@@ -55,8 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        backgroundColor: Colors.blue,  // Cambia el fondo del BottomNavigationBar
-        selectedItemColor: Colors.white,  // Cambia el color del ítem seleccionado
+        backgroundColor: Colors.white,  // Cambia el fondo del BottomNavigationBar
+        selectedItemColor: Colors.black,  // Cambia el color del ítem seleccionado
         unselectedItemColor: Colors.grey,  // Cambia el color de los ítems no seleccionados
         items: const [
           BottomNavigationBarItem(
@@ -66,15 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Carrito',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.visibility),
-            label: 'Vistos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
+          )
         ],
       ),
     );

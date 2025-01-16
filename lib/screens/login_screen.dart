@@ -66,7 +66,7 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/nose.jpeg', width: 200, height: 200),
+            
             const SizedBox(height: 24),
             TextField(
               controller: _usernameController,

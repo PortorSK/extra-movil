@@ -3,19 +3,16 @@ import 'package:examen/screens/purchase_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:examen/modules/login/domain/dto/cart_item_dto.dart';
 import 'package:examen/modules/login/useCase/get_cart_items_usecase.dart';
-import 'package:examen/modules/login/useCase/remove_from_cart_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:examen/modules/login/domain/repository/purchase_repository.dart';
 
 class CartScreen extends StatefulWidget {
   final GetCartItemsUseCase getCartItemsUseCase;
-  final RemoveFromCartUseCase removeFromCartUseCase;
 
   const CartScreen({
     super.key,
     required this.getCartItemsUseCase,
-    required this.removeFromCartUseCase, 
     required cartRepository,
   });
 
@@ -32,20 +29,15 @@ class _CartScreenState extends State<CartScreen> {
     _cartItems = widget.getCartItemsUseCase.execute();
   }
 
-  Future<void> _removeItem(int productId) async {
-    await widget.removeFromCartUseCase.execute(productId);
-    setState(() {
-      _cartItems = widget.getCartItemsUseCase.execute();
-    });
-  }
-
   Future<void> _finalizePurchase(List<CartItemDTO> cartItems) async {
     final prefs = await SharedPreferences.getInstance();
     final purchasesData = prefs.getString('purchases') ?? '[]';
     final List<dynamic> purchases = jsonDecode(purchasesData);
 
-    final totalPurchase = cartItems.fold<double>(0.0, (sum, item) => sum + (item.price * item.quantity));
-    final totalProducts = cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
+    final totalPurchase = cartItems.fold<double>(
+        0.0, (sum, item) => sum + (item.price * item.quantity));
+    final totalProducts = cartItems.fold<int>(
+        0, (sum, item) => sum + item.quantity);
 
     purchases.add({
       'totalPurchase': totalPurchase,
@@ -82,8 +74,22 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  Future<void> _clearCart() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cart', '[]'); // Vaciar el carrito
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('El carrito ha sido vaciado')),
+    );
+
+    setState(() {
+      _cartItems = widget.getCartItemsUseCase.execute();
+    });
+  }
+
   double _calculateTotal(List<CartItemDTO> cartItems) {
-    return cartItems.fold(0.0, (total, item) => total + (item.price * item.quantity));
+    return cartItems.fold(
+        0.0, (total, item) => total + (item.price * item.quantity));
   }
 
   @override
@@ -91,24 +97,6 @@ class _CartScreenState extends State<CartScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Carrito de compras'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () {
-              // Navegar al carrito de compras
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CartScreen(
-                    getCartItemsUseCase: widget.getCartItemsUseCase,
-                    removeFromCartUseCase: widget.removeFromCartUseCase,
-                    cartRepository: CartRepository(),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: FutureBuilder<List<CartItemDTO>>(
         future: _cartItems,
@@ -135,10 +123,6 @@ class _CartScreenState extends State<CartScreen> {
                         title: Text(item.name),
                         subtitle: Text(
                             'Cantidad: ${item.quantity} | Total: \$${(item.price * item.quantity).toStringAsFixed(2)}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _removeItem(item.id),
-                        ),
                       );
                     },
                   ),
@@ -147,14 +131,27 @@ class _CartScreenState extends State<CartScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     'Total: \$${total.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton(
-                    onPressed: () => _finalizePurchase(cart),
-                    child: const Text('Finalizar compra'),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () => _clearCart(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Vaciar carrito'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _finalizePurchase(cart),
+                        child: const Text('Finalizar compra'),
+                      ),
+                    ],
                   ),
                 ),
               ],
